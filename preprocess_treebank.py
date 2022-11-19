@@ -185,6 +185,8 @@ for f in os.listdir(treebank_path):
                     print("Dry run finished.")
                     continue
 print(final_token_list[0])
+for tt in final_token_list[0]:
+    print(tt)
 exit()
 # Print logs:
 print("Skipped:")
@@ -316,7 +318,7 @@ for row in final_results:
             "embedding": token["embedding"],
             "attributes": token["um_feats"],
         })
-
+exit()
 # Recreate data set split so that a word comes up only in one of the data sets
 unique_words = dict(collections.Counter(t["lemma"] for t in final_results_filtered))
 word_types = dict(list(unique_words.items()))
