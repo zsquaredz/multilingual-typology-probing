@@ -184,6 +184,7 @@ for f in os.listdir(treebank_path):
                 if args.dry_run:
                     print("Dry run finished.")
                     continue
+print(final_token_list[0])
 exit()
 # Print logs:
 print("Skipped:")
