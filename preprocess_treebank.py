@@ -9,7 +9,7 @@ from conllu import parse_incr, TokenList
 import os
 from os import path
 import yaml
-from transformers import BertTokenizer, BertModel, XLMRobertaTokenizer, XLMRobertaModel
+from transformers import BertTokenizer, BertModel, XLMRobertaTokenizer, XLMRobertaModel, XLMRobertaForMaskedLM
 import pickle
 from argparse import ArgumentParser
 from utils.parser import parse_unimorph_features
@@ -25,7 +25,8 @@ parser.add_argument("--treebanks-root", type=str, default=_DEFAULT_TREEBANKS_ROO
 parser.add_argument("--dry-run", default=False, action="store_true", help="If enabled, will not actually \
                     compute any embeddings, but go over the dataset and do everything else.")
 parser.add_argument("--bert", default=None)
-parser.add_argument("--xlmr", default=None)
+parser.add_argument("--xlmr_vanilla", default=None)
+parser.add_argument("--xlmr_own_lm", default=None)
 parser.add_argument("--use-gpu", action="store_true", default=False)
 parser.add_argument("--skip-existing", action="store_true", default=False)
 args = parser.parse_args()
@@ -247,7 +248,7 @@ if args.bert:
 
         final_results.append(token_list)
 
-elif args.xlmr:
+elif args.xlmr_vanilla:
     output_filename = filename.split('.')[0] + f"{args.xlmr}.pkl"
     output_file = path.join(treebank_path, output_filename)
     model_name = args.xlmr
@@ -286,10 +287,68 @@ elif args.xlmr:
 
             # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
             outputs = model(inputs)
-            print(outputs)
             
             final_output = outputs[0]
-            print(final_output)
+
+            # shape: (batch_size, max_seq_length_in_batch, embedding_size)
+            # Here we remove the special tokens (BOS, EOS)
+            final_output = final_output[:, 1:, :][:, :-1, :]
+
+            # Average subtokens corresponding to the same word
+            # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
+            token_embeddings = scatter_mean(final_output, indices, dim=1)
+
+        # Convert to python objects
+        embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
+
+        for t, e in zip(token_list, embedding_list):
+            t["embedding"] = e
+
+        final_results.append(token_list)
+
+elif args.xlmr_own_lm:
+    output_filename = filename.split('.')[0] + f"{args.xlmr}.pkl"
+    output_file = path.join(treebank_path, output_filename)
+    model_name = args.xlmr
+
+    print(f"Processing {filename}...")
+
+    # Setup XLM-R
+    model = XLMRobertaForMaskedLM.from_pretrained(model_name).to(device)
+
+    # Subtokenize, keeping original token indices
+    results = []
+    for sent_id, tokenlist in enumerate(tqdm(final_token_list)):
+        labelled_subwords = subword_tokenize(tokenizer, [t["form"] for t in tokenlist])
+        subtoken_indices, subtokens = zip(*labelled_subwords)
+        subtoken_indices_tensor = torch.tensor(subtoken_indices).to(device)
+
+        # We add special tokens to the sequence and remove them after getting the output
+        subtoken_ids = torch.tensor(
+            tokenizer.build_inputs_with_special_tokens(tokenizer.convert_tokens_to_ids(subtokens))).to(device)
+
+        results.append((tokenlist, subtoken_ids, subtoken_indices_tensor))
+
+    # Prepare to compute embeddings
+    model.eval()
+
+    # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
+    for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
+        total += 1
+
+        with torch.no_grad():
+            # shape: (batch_size, max_seq_length_in_batch + 2)
+            inputs = subtoken_ids.reshape(1, -1)
+
+            # shape: (batch_size, max_seq_length_in_batch)
+            indices = subtoken_indices_tensor.reshape(1, -1)
+
+            # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
+            outputs = model(inputs, output_hidden_states=True)
+            print(len(outputs.hidden_states))
+            
+            
+            print(outputs.hidden_states[0].shape)
             exit()
 
             # shape: (batch_size, max_seq_length_in_batch, embedding_size)
