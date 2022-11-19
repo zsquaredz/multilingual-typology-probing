@@ -186,7 +186,7 @@ for f in os.listdir(treebank_path):
                     continue
 print(final_token_list[0])
 for tt in final_token_list[0]:
-    print(tt)
+    print(tt['um_feats'])
 exit()
 # Print logs:
 print("Skipped:")
