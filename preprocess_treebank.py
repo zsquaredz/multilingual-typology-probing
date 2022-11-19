@@ -2,7 +2,6 @@ import collections
 from sklearn.model_selection import train_test_split
 from typing import List, Tuple, Dict, Any
 import numpy as np
-
 import torch
 from torch_scatter import scatter_mean
 from tqdm import tqdm
@@ -104,7 +103,7 @@ for f in os.listdir(treebank_path):
         
 
         # Load possible UM tags
-        tags_file = "utils/tags.yaml"
+        tags_file = "unimorph/tags.yaml"
         with open(tags_file, 'r') as h:
             _UNIMORPH_ATTRIBUTE_VALUES = yaml.full_load(h)["categories"]
 
@@ -185,7 +184,7 @@ for f in os.listdir(treebank_path):
                 if args.dry_run:
                     print("Dry run finished.")
                     continue
-
+exit()
 # Print logs:
 print("Skipped:")
 print(skipped)
