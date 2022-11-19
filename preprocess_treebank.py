@@ -184,9 +184,7 @@ for f in os.listdir(treebank_path):
                 if args.dry_run:
                     print("Dry run finished.")
                     continue
-print(len(final_token_list))
 
-exit()
 # Print logs:
 print("Skipped:")
 print(skipped)
@@ -288,7 +286,11 @@ elif args.xlmr:
 
             # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
             outputs = model(inputs)
+            print(outputs)
+            
             final_output = outputs[0]
+            print(final_output)
+            exit()
 
             # shape: (batch_size, max_seq_length_in_batch, embedding_size)
             # Here we remove the special tokens (BOS, EOS)
