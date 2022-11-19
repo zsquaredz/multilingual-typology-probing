@@ -25,8 +25,9 @@ parser.add_argument("--treebanks-root", type=str, default=_DEFAULT_TREEBANKS_ROO
 parser.add_argument("--dry-run", default=False, action="store_true", help="If enabled, will not actually \
                     compute any embeddings, but go over the dataset and do everything else.")
 parser.add_argument("--bert", default=None)
-parser.add_argument("--xlmr_vanilla", default=None)
-parser.add_argument("--xlmr_own_lm", default=None)
+parser.add_argument("--xlmr", default=None)
+parser.add_argument("--use_vanilla", action="store_true", default=False, help="Use the pre-trained checkpoint provided by Huggingface")
+parser.add_argument("--use_own_lm", action="store_true", default=False, help="Use the self trained checkpoint on MLM task")
 parser.add_argument("--use-gpu", action="store_true", default=False)
 parser.add_argument("--skip-existing", action="store_true", default=False)
 args = parser.parse_args()
