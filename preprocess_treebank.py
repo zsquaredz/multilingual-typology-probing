@@ -392,6 +392,7 @@ elif args.use_own_lm:
         # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
         for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
             total += 1
+            # final_output_list = [] # list where each element is for each layer
 
             with torch.no_grad():
                 # shape: (batch_size, max_seq_length_in_batch + 2)
@@ -402,12 +403,8 @@ elif args.use_own_lm:
 
                 # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
                 outputs = model(inputs, output_hidden_states=True)
-                # print(len(outputs.hidden_states))
                 
-                
-                # print(outputs.hidden_states[0].shape)
-                # exit()
-                for layer_num in range(0,1):
+                for layer_num in range(0,13):
                     final_output = outputs.hidden_states[layer_num]
                     # shape: (batch_size, max_seq_length_in_batch, embedding_size)
                     # Here we remove the special tokens (BOS, EOS)
@@ -415,21 +412,23 @@ elif args.use_own_lm:
 
                     # Average subtokens corresponding to the same word
                     # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
-                    token_embeddings = scatter_mean(final_output, indices, dim=1)
+                    final_output_tmp = scatter_mean(final_output, indices, dim=1)
+                    # Convert to python objects
+                    final_output_tmp_list = [x.cpu().numpy() for x in final_output_tmp.squeeze(0).split(1, dim=0)]
+                    # final_output_list.append(final_output_tmp_list)
+                    assert len(token_list) == len(final_output_tmp_list) # sanity check
+                    for t, e in zip(token_list, final_output_tmp_list):
+                        t["layer_"+str(layer_num)] = e
 
-            # Convert to python objects
-            embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
             
-            assert len(token_list) == len(embedding_list) # sanity check
-            for t, e in zip(token_list, embedding_list):
-                print(t.keys())
-                t["embedding"] = e
-                print(t)
-                print(t.keys())
+            
+            # assert len(token_list) == len(final_output_list[0]) # sanity check
+            
 
 
             final_results.append(token_list)
             print(token_list[0].keys())
+            print(token_list[0])
             exit()
 
 # Keep important parts
