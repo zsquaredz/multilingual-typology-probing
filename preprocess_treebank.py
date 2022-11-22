@@ -309,66 +309,124 @@ if args.use_vanilla:
             final_results.append(token_list)
 
 elif args.use_own_lm:
-    
-    output_filename = filename.split('.')[0] + f"{args.xlmr}.pkl"
-    output_file = path.join(treebank_path, output_filename)
-    model_name = args.xlmr
+    if args.bert:
+        model_name = bert_model
+        print(f"Processing {args.treebank}...")
 
-    print(f"Processing {filename}...")
+        # Setup BERT
+        model = BertModel.from_pretrained(bert_model).to(device)
 
-    # Setup XLM-R
-    model = XLMRobertaForMaskedLM.from_pretrained(model_name).to(device)
+        # Subtokenize, keeping original token indices
+        results = []
+        for sent_id, tokenlist in enumerate(tqdm(final_token_list)):
+            labelled_subwords = subword_tokenize(tokenizer, [t["form"] for t in tokenlist])
+            subtoken_indices, subtokens = zip(*labelled_subwords)
+            subtoken_indices_tensor = torch.tensor(subtoken_indices).to(device)
 
-    # Subtokenize, keeping original token indices
-    results = []
-    for sent_id, tokenlist in enumerate(tqdm(final_token_list)):
-        labelled_subwords = subword_tokenize(tokenizer, [t["form"] for t in tokenlist])
-        subtoken_indices, subtokens = zip(*labelled_subwords)
-        subtoken_indices_tensor = torch.tensor(subtoken_indices).to(device)
+            # We add special tokens to the sequence and remove them after getting the BERT output
+            subtoken_ids = torch.tensor(
+                tokenizer.build_inputs_with_special_tokens(tokenizer.convert_tokens_to_ids(subtokens))).to(device)
 
-        # We add special tokens to the sequence and remove them after getting the output
-        subtoken_ids = torch.tensor(
-            tokenizer.build_inputs_with_special_tokens(tokenizer.convert_tokens_to_ids(subtokens))).to(device)
+            results.append((tokenlist, subtoken_ids, subtoken_indices_tensor))
 
-        results.append((tokenlist, subtoken_ids, subtoken_indices_tensor))
+        # Prepare to compute BERT embeddings
+        model.eval()
 
-    # Prepare to compute embeddings
-    model.eval()
+        # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
+        for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
+            total += 1
 
-    # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
-    for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
-        total += 1
+            with torch.no_grad():
+                # shape: (batch_size, max_seq_length_in_batch + 2)
+                inputs = subtoken_ids.reshape(1, -1)
 
-        with torch.no_grad():
-            # shape: (batch_size, max_seq_length_in_batch + 2)
-            inputs = subtoken_ids.reshape(1, -1)
+                # shape: (batch_size, max_seq_length_in_batch)
+                indices = subtoken_indices_tensor.reshape(1, -1)
 
-            # shape: (batch_size, max_seq_length_in_batch)
-            indices = subtoken_indices_tensor.reshape(1, -1)
+                # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
+                outputs = model(inputs)
+                final_output = outputs[0]
 
-            # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
-            outputs = model(inputs, output_hidden_states=True)
-            print(len(outputs.hidden_states))
-            
-            
-            print(outputs.hidden_states[0].shape)
+                # shape: (batch_size, max_seq_length_in_batch, embedding_size)
+                # Here we remove the special tokens (BOS, EOS)
+                final_output = final_output[:, 1:, :][:, :-1, :]
+
+                # Average subtokens corresponding to the same word
+                # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
+                token_embeddings = scatter_mean(final_output, indices, dim=1)
+
+            # Convert to python objects
+            embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
+
+            for t, e in zip(token_list, embedding_list):
+                t["embedding"] = e
+
+            final_results.append(token_list)
+
+    elif args.xlmr:
+        output_filename = filename.split('.')[0] + f"{args.xlmr}.pkl"
+        output_file = path.join(treebank_path, output_filename)
+        model_name = args.xlmr
+
+        print(f"Processing {filename}...")
+
+        # Setup XLM-R
+        model = XLMRobertaForMaskedLM.from_pretrained(model_name).to(device)
+
+        # Subtokenize, keeping original token indices
+        results = []
+        for sent_id, tokenlist in enumerate(tqdm(final_token_list)):
+            labelled_subwords = subword_tokenize(tokenizer, [t["form"] for t in tokenlist])
+            subtoken_indices, subtokens = zip(*labelled_subwords)
+            subtoken_indices_tensor = torch.tensor(subtoken_indices).to(device)
+
+            # We add special tokens to the sequence and remove them after getting the output
+            subtoken_ids = torch.tensor(
+                tokenizer.build_inputs_with_special_tokens(tokenizer.convert_tokens_to_ids(subtokens))).to(device)
+
+            results.append((tokenlist, subtoken_ids, subtoken_indices_tensor))
+
+        # Prepare to compute embeddings
+        model.eval()
+
+        # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
+        for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
+            total += 1
+
+            with torch.no_grad():
+                # shape: (batch_size, max_seq_length_in_batch + 2)
+                inputs = subtoken_ids.reshape(1, -1)
+
+                # shape: (batch_size, max_seq_length_in_batch)
+                indices = subtoken_indices_tensor.reshape(1, -1)
+
+                # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
+                outputs = model(inputs, output_hidden_states=True)
+                # print(len(outputs.hidden_states))
+                
+                
+                # print(outputs.hidden_states[0].shape)
+                # exit()
+                for layer_num in range(0,1):
+                    final_output = outputs.hidden_states[layer_num]
+                    # shape: (batch_size, max_seq_length_in_batch, embedding_size)
+                    # Here we remove the special tokens (BOS, EOS)
+                    final_output = final_output[:, 1:, :][:, :-1, :]
+
+                    # Average subtokens corresponding to the same word
+                    # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
+                    token_embeddings = scatter_mean(final_output, indices, dim=1)
+
+            # Convert to python objects
+            embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
+            print(len(token_list))
+            print(len(embedding_list))
+
+            for t, e in zip(token_list, embedding_list):
+                t["embedding"] = e
+
+            final_results.append(token_list)
             exit()
-
-            # shape: (batch_size, max_seq_length_in_batch, embedding_size)
-            # Here we remove the special tokens (BOS, EOS)
-            final_output = final_output[:, 1:, :][:, :-1, :]
-
-            # Average subtokens corresponding to the same word
-            # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
-            token_embeddings = scatter_mean(final_output, indices, dim=1)
-
-        # Convert to python objects
-        embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
-
-        for t, e in zip(token_list, embedding_list):
-            t["embedding"] = e
-
-        final_results.append(token_list)
 
 # Keep important parts
 final_results_filtered = []
