@@ -419,13 +419,17 @@ elif args.use_own_lm:
 
             # Convert to python objects
             embedding_list = [x.cpu().numpy() for x in token_embeddings.squeeze(0).split(1, dim=0)]
-            print(len(token_list))
-            print(len(embedding_list))
-
+            
+            assert len(token_list) == len(embedding_list) # sanity check
             for t, e in zip(token_list, embedding_list):
+                print(t.keys())
                 t["embedding"] = e
+                print(t)
+                print(t.keys())
+
 
             final_results.append(token_list)
+            print(token_list[0].keys())
             exit()
 
 # Keep important parts
