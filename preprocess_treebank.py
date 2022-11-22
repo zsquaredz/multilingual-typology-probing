@@ -429,7 +429,7 @@ elif args.use_own_lm:
             final_results.append(token_list)
             print(token_list[0].keys())
             print(type(token_list[0]['layer_12']))
-            print(len(token_list[0]['layer_10']))
+            print(len(token_list[0]['layer_10'][0]))
             exit()
 
 # Keep important parts
