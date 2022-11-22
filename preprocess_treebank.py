@@ -419,64 +419,73 @@ elif args.use_own_lm:
                     assert len(token_list) == len(final_output_tmp_list) # sanity check
                     for t, e in zip(token_list, final_output_tmp_list):
                         t["layer_"+str(layer_num)] = e
-
             
-            
-            # assert len(token_list) == len(final_output_list[0]) # sanity check
-            
-
-
             final_results.append(token_list)
-            print(token_list[0].keys())
-            print(type(token_list[0]['layer_12']))
-            print(len(token_list[0]['layer_10'][0]))
-            exit()
+        
 
 # Keep important parts
 final_results_filtered = []
 for row in final_results:
     for token in row:
-        
         final_results_filtered.append({
             "word": token["form"],
             "lemma": token["lemma"],
-            "embedding": token["embedding"],
+            "layer_0": token["layer_0"],
+            "layer_1": token["layer_1"],
+            "layer_2": token["layer_2"],
+            "layer_3": token["layer_3"],
+            "layer_4": token["layer_4"],
+            "layer_5": token["layer_5"],
+            "layer_6": token["layer_6"],
+            "layer_7": token["layer_7"],
+            "layer_8": token["layer_8"],
+            "layer_9": token["layer_9"],
+            "layer_10": token["layer_10"],
+            "layer_11": token["layer_11"],
+            "layer_12": token["layer_12"],
             "attributes": token["um_feats"],
         })
-exit()
-# Recreate data set split so that a word comes up only in one of the data sets
-unique_words = dict(collections.Counter(t["lemma"] for t in final_results_filtered))
-word_types = dict(list(unique_words.items()))
 
-if len(word_types) <= 10:
-    raise Exception("Not enough words to form splits")
+# # Recreate data set split so that a word comes up only in one of the data sets
+# unique_words = dict(collections.Counter(t["lemma"] for t in final_results_filtered))
+# word_types = dict(list(unique_words.items()))
 
-# Train test split to shuffles the word and split. We use a 80/10/10
-train_words, dev_test_words = train_test_split(list(unique_words.keys()), test_size=0.2, random_state=0)
-dev_words, test_words = train_test_split(dev_test_words, test_size=0.5, random_state=0)
+# if len(word_types) <= 10:
+#     raise Exception("Not enough words to form splits")
 
-# Optimize inclusion checks
-train_words, dev_words, test_words = set(train_words), set(dev_words), set(test_words)
+# # Train test split to shuffles the word and split. We use a 80/10/10
+# train_words, dev_test_words = train_test_split(list(unique_words.keys()), test_size=0.2, random_state=0)
+# dev_words, test_words = train_test_split(dev_test_words, test_size=0.5, random_state=0)
 
-print("Building final...")
-train = [t for t in final_results_filtered if t['lemma'] in train_words]
-dev = [t for t in final_results_filtered if t['lemma'] in dev_words]
-test = [t for t in final_results_filtered if t['lemma'] in test_words]
+# # Optimize inclusion checks
+# train_words, dev_words, test_words = set(train_words), set(dev_words), set(test_words)
 
-print(f"Final sizes: {len(train)}/{len(dev)}/{len(test)}")
+# print("Building final...")
+# train = [t for t in final_results_filtered if t['lemma'] in train_words]
+# dev = [t for t in final_results_filtered if t['lemma'] in dev_words]
+# test = [t for t in final_results_filtered if t['lemma'] in test_words]
+
+# print(f"Final sizes: {len(train)}/{len(dev)}/{len(test)}")
+
+print(f"Final data sizes: {len(final_results_filtered)}")
 
 # Save final results
 print("Save data sets")
 
-train_file = path.join(treebank_path, "{}-train-{}.pkl".format(args.treebank, model_name))
-test_file = path.join(treebank_path, "{}-test-{}.pkl".format(args.treebank, model_name))
-dev_file = path.join(treebank_path, "{}-dev-{}.pkl".format(args.treebank, model_name))
+# train_file = path.join(treebank_path, "{}-train-{}.pkl".format(args.treebank, model_name))
+# test_file = path.join(treebank_path, "{}-test-{}.pkl".format(args.treebank, model_name))
+# dev_file = path.join(treebank_path, "{}-dev-{}.pkl".format(args.treebank, model_name))
 
-with open(train_file, "wb") as h:
-    pickle.dump(train, h)
+# with open(train_file, "wb") as h:
+#     pickle.dump(train, h)
 
-with open(test_file, "wb") as h:
-    pickle.dump(test, h)
+# with open(test_file, "wb") as h:
+#     pickle.dump(test, h)
 
-with open(dev_file, "wb") as h:
-    pickle.dump(dev, h)
+# with open(dev_file, "wb") as h:
+#     pickle.dump(dev, h)
+
+data_file = path.join(treebank_path, "{}-{}.pkl".format(args.treebank, model_name))
+
+with open(data_file, "wb") as h:
+    pickle.dump(final_results_filtered, h)
