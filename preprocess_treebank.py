@@ -28,6 +28,7 @@ parser.add_argument("--bert", default=None)
 parser.add_argument("--xlmr", default=None)
 parser.add_argument("--use_vanilla", action="store_true", default=False, help="Use the pre-trained checkpoint provided by Huggingface")
 parser.add_argument("--use_own_lm", action="store_true", default=False, help="Use the self trained checkpoint on MLM task")
+parser.add_argument("--model_path", type=str, default="./checkpoint/", help="path to model checkpoint")
 parser.add_argument("--use-gpu", action="store_true", default=False)
 parser.add_argument("--skip-existing", action="store_true", default=False)
 args = parser.parse_args()
@@ -371,7 +372,8 @@ elif args.use_own_lm:
         print(f"Processing {filename}...")
 
         # Setup XLM-R
-        model = XLMRobertaForMaskedLM.from_pretrained(model_name).to(device)
+        model = XLMRobertaForMaskedLM.from_pretrained(args.model_path).to(device)
+        print('Using XLM-Roberta from: ', args.model_path)
 
         # Subtokenize, keeping original token indices
         results = []
