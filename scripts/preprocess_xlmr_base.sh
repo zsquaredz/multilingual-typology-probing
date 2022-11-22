@@ -3,7 +3,7 @@ HOME_DIR=/disk/ocean/zheng/ # Cohort-server
 source ${HOME_DIR}/.bashrc
 conda activate cdt
 
-for CORPUS in $(cat scripts/languages_common.lst); do
+for CORPUS in $(cat scripts/languages_div10.lst); do
   echo "python preprocess_treebank.py $CORPUS --xlmr xlm-roberta-base"
   TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
   python preprocess_treebank.py $CORPUS \
