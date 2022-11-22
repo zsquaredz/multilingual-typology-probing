@@ -9,7 +9,7 @@ from conllu import parse_incr, TokenList
 import os
 from os import path
 import yaml
-from transformers import BertTokenizer, BertModel, XLMRobertaTokenizer, XLMRobertaModel, XLMRobertaForMaskedLM
+from transformers import BertTokenizer, BertModel, XLMRobertaTokenizer, XLMRobertaModel, XLMRobertaForMaskedLM, RobertaForMaskedLM
 import pickle
 from argparse import ArgumentParser
 from utils.parser import parse_unimorph_features
@@ -26,6 +26,7 @@ parser.add_argument("--dry-run", default=False, action="store_true", help="If en
                     compute any embeddings, but go over the dataset and do everything else.")
 parser.add_argument("--bert", default=None)
 parser.add_argument("--xlmr", default=None)
+parser.add_argument("--roberta", default=None)
 parser.add_argument("--use_vanilla", action="store_true", default=False, help="Use the pre-trained checkpoint provided by Huggingface")
 parser.add_argument("--use_own_lm", action="store_true", default=False, help="Use the self trained checkpoint on MLM task")
 parser.add_argument("--model_path", type=str, default="./checkpoint/", help="path to model checkpoint")
@@ -41,6 +42,7 @@ treebank_path = os.path.join(args.treebanks_root, args.treebank)
 limit_number = None
 bert_model = args.bert
 xlmr_model = args.xlmr
+roberta_model = args.roberta
 print("Embeddings root:", config.EMBEDDINGS_ROOT)
 
 skip_existing = args.skip_existing
@@ -117,7 +119,8 @@ for f in os.listdir(treebank_path):
         # Parse Conll-U files with UM
         with open(full_path, "r") as h:
             # Setup BERT tokenizer here provisionally as we need to know which sentences have 512+ subtokens
-            if args.xlmr:
+            if args.xlmr or args.roberta:
+                # for now both xlmr and roberta share the same xlmr tokenizer
                 tokenizer = XLMRobertaTokenizer.from_pretrained(args.xlmr)
             else:
                 tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
@@ -256,7 +259,7 @@ if args.use_vanilla:
         output_file = path.join(treebank_path, output_filename)
         model_name = args.xlmr
 
-        print(f"Processing {filename}...")
+        print(f"Processing {args.treebank}...")
 
         # Setup XLM-R
         model = XLMRobertaModel.from_pretrained(model_name).to(device)
@@ -369,7 +372,7 @@ elif args.use_own_lm:
         output_file = path.join(treebank_path, output_filename)
         model_name = args.xlmr
 
-        print(f"Processing {filename}...")
+        print(f"Processing {args.treebank}...")
 
         # Setup XLM-R
         model = XLMRobertaForMaskedLM.from_pretrained(args.model_path).to(device)
@@ -424,6 +427,65 @@ elif args.use_own_lm:
             
             final_results.append(token_list)
         
+    elif args.roberta:
+        output_filename = filename.split('.')[0] + f"{args.roberta}.pkl"
+        output_file = path.join(treebank_path, output_filename)
+        model_name = args.roberta
+
+        print(f"Processing {args.treebank}...")
+
+        # Setup Roberta
+        model = RobertaForMaskedLM.from_pretrained(args.model_path).to(device)
+        print('Using Roberta from: ', args.model_path)
+
+        # Subtokenize, keeping original token indices
+        results = []
+        for sent_id, tokenlist in enumerate(tqdm(final_token_list)):
+            labelled_subwords = subword_tokenize(tokenizer, [t["form"] for t in tokenlist])
+            subtoken_indices, subtokens = zip(*labelled_subwords)
+            subtoken_indices_tensor = torch.tensor(subtoken_indices).to(device)
+
+            # We add special tokens to the sequence and remove them after getting the output
+            subtoken_ids = torch.tensor(
+                tokenizer.build_inputs_with_special_tokens(tokenizer.convert_tokens_to_ids(subtokens))).to(device)
+
+            results.append((tokenlist, subtoken_ids, subtoken_indices_tensor))
+
+        # Prepare to compute embeddings
+        model.eval()
+
+        # NOTE: No batching, right now. But could be worthwhile to implement if a speed-up is necessary.
+        for token_list, subtoken_ids, subtoken_indices_tensor in tqdm(results):
+            total += 1
+            # final_output_list = [] # list where each element is for each layer
+
+            with torch.no_grad():
+                # shape: (batch_size, max_seq_length_in_batch + 2)
+                inputs = subtoken_ids.reshape(1, -1)
+
+                # shape: (batch_size, max_seq_length_in_batch)
+                indices = subtoken_indices_tensor.reshape(1, -1)
+
+                # shape: (batch_size, max_seq_length_in_batch + 2, embedding_size)
+                outputs = model(inputs, output_hidden_states=True)
+                
+                for layer_num in range(0,13):
+                    final_output = outputs.hidden_states[layer_num]
+                    # shape: (batch_size, max_seq_length_in_batch, embedding_size)
+                    # Here we remove the special tokens (BOS, EOS)
+                    final_output = final_output[:, 1:, :][:, :-1, :]
+
+                    # Average subtokens corresponding to the same word
+                    # shape: (batch_size, max_num_tokens_in_batch, embedding_size)
+                    final_output_tmp = scatter_mean(final_output, indices, dim=1)
+                    # Convert to python objects
+                    final_output_tmp_list = [x.cpu().numpy() for x in final_output_tmp.squeeze(0).split(1, dim=0)]
+                    # final_output_list.append(final_output_tmp_list)
+                    assert len(token_list) == len(final_output_tmp_list) # sanity check
+                    for t, e in zip(token_list, final_output_tmp_list):
+                        t["layer_"+str(layer_num)] = e
+            
+            final_results.append(token_list)
 
 # Keep important parts
 final_results_filtered = []
@@ -487,7 +549,10 @@ print("Save data sets")
 # with open(dev_file, "wb") as h:
 #     pickle.dump(dev, h)
 
-data_file = path.join(treebank_path, "{}-{}.pkl".format(args.treebank, model_name))
+if args.use_own_lm:
+    data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "custom-mlm-pretrain"))
+elif args.use_vanilla:
+    data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "huggingface-pretrain"))
 
 with open(data_file, "wb") as h:
     pickle.dump(final_results_filtered, h)
