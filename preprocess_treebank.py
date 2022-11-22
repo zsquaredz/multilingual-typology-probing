@@ -428,7 +428,7 @@ elif args.use_own_lm:
 
             final_results.append(token_list)
             print(token_list[0].keys())
-            print(token_list[0])
+            print(token_list[0]['layer_0'])
             exit()
 
 # Keep important parts
