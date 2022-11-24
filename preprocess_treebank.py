@@ -119,9 +119,11 @@ for f in os.listdir(treebank_path):
         # Parse Conll-U files with UM
         with open(full_path, "r") as h:
             # Setup BERT tokenizer here provisionally as we need to know which sentences have 512+ subtokens
-            if args.xlmr or args.roberta:
-                # for now both xlmr and roberta share the same xlmr tokenizer
+            if args.xlmr:
                 tokenizer = XLMRobertaTokenizer.from_pretrained(args.xlmr)
+            elif args.roberta:
+                # for now both xlmr and roberta share the same xlmr tokenizer
+                tokenizer = XLMRobertaTokenizer.from_pretrained('xlm-'+args.roberta)
             else:
                 tokenizer = BertTokenizer.from_pretrained("bert-base-multilingual-cased")
 
