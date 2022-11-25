@@ -16,7 +16,7 @@ conda activate cdt
 # done
 
 # for monolingual models
-for line in $(cat scripts/languages_div.lst); do
+for read line; do
   CORPUS=($line)
   echo ${line}
   # echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
@@ -26,4 +26,4 @@ for line in $(cat scripts/languages_div.lst); do
   # --use-gpu \
   # --use_own_lm \
   # --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}_pretraining_output/final
-done
+done < scripts/languages_div.lst
