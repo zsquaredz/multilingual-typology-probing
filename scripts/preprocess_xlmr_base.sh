@@ -18,7 +18,7 @@ conda activate cdt
 # for monolingual models
 while read line; do
   CORPUS=($line)
-  echo ${line}
+  echo ${CORPUS[0]} ${CORPUS[1]}
   # echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
   # TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
   # python preprocess_treebank.py ${CORPUS[0]} \
