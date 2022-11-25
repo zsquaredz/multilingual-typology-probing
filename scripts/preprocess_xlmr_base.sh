@@ -18,11 +18,12 @@ conda activate cdt
 # for monolingual models
 for line in $(cat scripts/languages_div.lst); do
   CORPUS=($line)
-  echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
-  TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
-  python preprocess_treebank.py ${CORPUS[0]} \
-  --roberta roberta-base \
-  --use-gpu \
-  --use_own_lm \
-  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}_pretraining_output/final
+  echo ${CORPUS[0]} ${CORPUS[0]} ${CORPUS[0]}
+  # echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
+  # TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
+  # python preprocess_treebank.py ${CORPUS[0]} \
+  # --roberta roberta-base \
+  # --use-gpu \
+  # --use_own_lm \
+  # --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}_pretraining_output/final
 done
