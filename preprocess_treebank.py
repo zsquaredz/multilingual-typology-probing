@@ -35,8 +35,8 @@ parser.add_argument("--skip-existing", action="store_true", default=False)
 args = parser.parse_args()
 
 
-if not (args.bert or args.xlmr):
-    raise Exception("Must do either BERT or XLMR, but not more than one")
+if not (args.bert or args.xlmr or args.roberta):
+    raise Exception("Must do either BERT or XLMR or Roberta, but not more than one")
 
 treebank_path = os.path.join(args.treebanks_root, args.treebank)
 limit_number = None
