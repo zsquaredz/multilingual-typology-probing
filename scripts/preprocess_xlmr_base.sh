@@ -16,7 +16,7 @@ conda activate cdt
 # done
 
 # for monolingual models
-for read line; do
+while read line; do
   CORPUS=($line)
   echo ${line}
   # echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
