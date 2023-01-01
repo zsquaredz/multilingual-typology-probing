@@ -27,6 +27,7 @@ parser.add_argument("--dry-run", default=False, action="store_true", help="If en
 parser.add_argument("--bert", default=None)
 parser.add_argument("--xlmr", default=None)
 parser.add_argument("--roberta", default=None)
+parser.add_argument("--exp_name", default=None)
 parser.add_argument("--use_vanilla", action="store_true", default=False, help="Use the pre-trained checkpoint provided by Huggingface")
 parser.add_argument("--use_own_lm", action="store_true", default=False, help="Use the self trained checkpoint on MLM task")
 parser.add_argument("--model_path", type=str, default="./checkpoint/", help="path to model checkpoint")
@@ -552,9 +553,15 @@ print("Save data sets")
 #     pickle.dump(dev, h)
 
 if args.use_own_lm:
-    data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "custom-mlm-pretrain"))
+    if args.exp_name:
+        data_file = path.join(treebank_path, "{}-{}-{}-{}.pkl".format(args.treebank, model_name, args.exp_name, "custom-mlm-pretrain"))
+    else:
+        data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "custom-mlm-pretrain"))
 elif args.use_vanilla:
-    data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "huggingface-pretrain"))
+    if args.exp_name:
+        data_file = path.join(treebank_path, "{}-{}-{}-{}.pkl".format(args.treebank, model_name, args.exp_name, "huggingface-pretrain"))
+    else:
+        data_file = path.join(treebank_path, "{}-{}-{}.pkl".format(args.treebank, model_name, "huggingface-pretrain"))
 
 with open(data_file, "wb") as h:
     pickle.dump(final_results_filtered, h)
