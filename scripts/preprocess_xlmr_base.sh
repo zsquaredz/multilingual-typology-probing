@@ -38,4 +38,4 @@ while read line; do
   --use-gpu \
   --use_own_lm \
   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}-multi-tok_pretraining_output/final
-done < scripts/languages_rel5.lst
+done < scripts/languages_div.lst
