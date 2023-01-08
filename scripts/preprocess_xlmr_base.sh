@@ -33,7 +33,7 @@ while read line; do
   CORPUS=($line)
   echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
   TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
-  python preprocess_treebank.py ${CORPUS[0]} \
+  CUDA_VISIBLE_DEVICES=1 python preprocess_treebank.py ${CORPUS[0]} \
   --roberta roberta-base \
   --use-gpu \
   --use_own_lm \
