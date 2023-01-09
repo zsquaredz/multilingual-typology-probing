@@ -94,7 +94,7 @@ categories:
     - CIRC
     - ANTE
     - APUD
-    - ON
+    - 'ON'
     - ONHR
     - ONVR
     - SUB
@@ -218,7 +218,7 @@ categories:
     - GPAUC
     - INVN
   'Part of Speech':
-    - N
+    - 'N'
     - PROPN
     - ADJ
     - PRO
