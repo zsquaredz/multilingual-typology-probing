@@ -34,6 +34,7 @@ def parse_unimorph_features(features: List[str]) -> Dict[str, str]:
             # We handle conjunctive statements by creating a new value for them.
             # We canonicalize the feature by sorting the composing conjuncts alphabetically.
             values = x.split("+")
+            print(_UNIMORPH_VALUES_ATTRIBUTE)
             attr = _UNIMORPH_VALUES_ATTRIBUTE[values[0]]
             for v in values:
                 if attr != _UNIMORPH_VALUES_ATTRIBUTE[v]:
