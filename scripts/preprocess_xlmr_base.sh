@@ -34,13 +34,13 @@ while read line; do
   CORPUS=($line)
   echo "python preprocess_treebank.py ${CORPUS[0]} --xlmr xlm-roberta-base"
   TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
-  CUDA_VISIBLE_DEVICES=0 python preprocess_treebank.py ${CORPUS[0]} \
+  CUDA_VISIBLE_DEVICES=1 python preprocess_treebank.py ${CORPUS[0]} \
   --xlmr xlm-roberta-base \
   --use-gpu \
   --use_own_lm \
   --exp_name All33 \
   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output/final
-done < scripts/languages_div.lst
+done < scripts/languages_div1.lst
 
 # # for monolingual models
 # while read line; do
