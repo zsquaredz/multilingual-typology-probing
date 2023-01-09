@@ -12,7 +12,7 @@ while read line; do
   --xlmr xlm-roberta-base \
   --use-gpu \
   --use_own_lm \
-  --exp_name Div10-CSD3
+  --exp_name Div10-CSD3 \
   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/Div10_csd3_pretraining_output/final
 done < scripts/languages_div10.lst
 
