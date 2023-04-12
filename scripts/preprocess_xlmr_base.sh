@@ -40,7 +40,7 @@ while read line; do
   --use_own_lm \
   --exp_name All33 \
   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output/final
-done < scripts/languages_div2.lst
+done < scripts/languages_debug.lst
 
 # # for monolingual models
 # while read line; do
