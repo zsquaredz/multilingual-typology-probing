@@ -199,7 +199,7 @@ for f in os.listdir(treebank_path):
                     for t in final_tokens:
                         original_form = t["form"]
                         if args.lang == "zh":
-                            form_transliterate = lazy_pinyin(original_form)
+                            form_transliterate = ' '.join(lazy_pinyin(original_form))
                         elif args.lang == "ja":
                             result = kks.convert(original_form)
                             form_transliterate = ' '.join([item['hepburn'] for item in result])
