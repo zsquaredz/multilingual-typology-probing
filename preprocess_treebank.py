@@ -15,6 +15,10 @@ from argparse import ArgumentParser
 from utils.parser import parse_unimorph_features
 import config
 import json
+from pypinyin import lazy_pinyin
+import pykakasi
+
+kks = pykakasi.kakasi()
 
 
 _DEFAULT_TREEBANKS_ROOT = path.join(config.DATA_ROOT, "ud/ud-treebanks-v2.1")
@@ -32,6 +36,8 @@ parser.add_argument("--use_vanilla", action="store_true", default=False, help="U
 parser.add_argument("--use_own_lm", action="store_true", default=False, help="Use the self trained checkpoint on MLM task")
 parser.add_argument("--model_path", type=str, default="./checkpoint/", help="path to model checkpoint")
 parser.add_argument("--use-gpu", action="store_true", default=False)
+parser.add_argument("--transliterate", action="store_true", default=False)
+parser.add_argument("--lang", type=str)
 parser.add_argument("--skip-existing", action="store_true", default=False)
 args = parser.parse_args()
 
@@ -186,6 +192,19 @@ for f in os.listdir(treebank_path):
                     skipped["total_sents"] = 0
 
                 skipped["total_sents"] += 1
+
+                # if transliteration is set to true, transliterate the tokens for zh and ja
+                if args.transliterate and args.lang in ["zh", "ja"]:
+                    print(final_tokens)
+                    for t in final_tokens:
+                        original_form = t["form"]
+                        if args.lang == "zh":
+                            form_transliterate = lazy_pinyin(original_form)
+                        elif args.lang == "ja":
+                            result = kks.convert(original_form)
+                            form_transliterate = ' '.join([item['hepburn'] for item in result])
+                        t["form"] = form_transliterate
+                    print(final_tokens)
 
                 # Add this sentence to the list we are processing
                 final_token_list.append(final_tokens)
