@@ -195,7 +195,6 @@ for f in os.listdir(treebank_path):
 
                 # if transliteration is set to true, transliterate the tokens for zh and ja
                 if args.transliterate and args.lang in ["zh", "ja"]:
-                    print(final_tokens)
                     for t in final_tokens:
                         original_form = t["form"]
                         if args.lang == "zh":
@@ -204,7 +203,6 @@ for f in os.listdir(treebank_path):
                             result = kks.convert(original_form)
                             form_transliterate = ' '.join([item['hepburn'] for item in result])
                         t["form"] = form_transliterate
-                    print(final_tokens)
 
                 # Add this sentence to the list we are processing
                 final_token_list.append(final_tokens)
