@@ -282,7 +282,7 @@ if args.use_vanilla:
         print(f"Processing {args.treebank}...")
 
         # Setup XLM-R
-        model = XLMRobertaModel.from_pretrained(model_name).to(device)
+        model = XLMRobertaForMaskedLM.from_pretrained(model_name).to(device)
 
         # Subtokenize, keeping original token indices
         results = []
