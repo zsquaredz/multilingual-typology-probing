@@ -30,6 +30,8 @@ conda activate cdt
 # done < scripts/languages_rel5.lst
 
 # # for multilingual models All-33
+# export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
+# HOME=$HOME_DIR TRANSFORMERS_CACHE=${HOME_DIR}/.cache/ 
 # while read line; do
 #   CORPUS=($line)
 #   echo "python preprocess_treebank.py ${CORPUS[0]} --xlmr xlm-roberta-base"
@@ -44,6 +46,8 @@ conda activate cdt
 # done < scripts/languages_debug.lst
 
 # for pretrained checkpoint multilingual models All-33
+export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
+HOME=$HOME_DIR TRANSFORMERS_CACHE=${HOME_DIR}/.cache/ 
 while read line; do
   CORPUS=($line)
   echo "python preprocess_treebank.py ${CORPUS[0]} --xlmr xlm-roberta-base"
