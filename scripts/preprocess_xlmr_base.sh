@@ -43,7 +43,7 @@ while read line; do
   --exp_name All33LowEN \
   --lang ${CORPUS[1]} \
   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_en/final
-done < scripts/languages_debug.lst
+done < scripts/languages_debug1.lst
 
 # # for pretrained checkpoint multilingual models All-33
 # export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
