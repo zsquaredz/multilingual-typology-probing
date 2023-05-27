@@ -29,21 +29,21 @@ conda activate cdt
 #   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/Rel5_pretraining_output/final
 # done < scripts/languages_rel5.lst
 
-# # for multilingual models All-33
-# export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
-# HOME=$HOME_DIR TRANSFORMERS_CACHE=${HOME_DIR}/.cache/ 
-# while read line; do
-#   CORPUS=($line)
-#   echo "python preprocess_treebank.py ${CORPUS[0]} --xlmr xlm-roberta-base"
-#   TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
-#   CUDA_VISIBLE_DEVICES=1 python preprocess_treebank.py ${CORPUS[0]} \
-#   --xlmr xlm-roberta-base \
-#   --use-gpu \
-#   --use_own_lm \
-#   --exp_name All33LowEN \
-#   --lang ${CORPUS[1]} \
-#   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_en/final
-# done < scripts/languages_debug1.lst
+# for multilingual models All-33
+export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
+HOME=$HOME_DIR TRANSFORMERS_CACHE=${HOME_DIR}/.cache/ 
+while read line; do
+  CORPUS=($line)
+  echo "python preprocess_treebank.py ${CORPUS[0]} --xlmr xlm-roberta-base"
+  TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
+  CUDA_VISIBLE_DEVICES=1 python preprocess_treebank.py ${CORPUS[0]} \
+  --xlmr xlm-roberta-base \
+  --use-gpu \
+  --use_own_lm \
+  --exp_name All33LowEN \
+  --lang ${CORPUS[1]} \
+  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_en/final
+done < scripts/languages_debug1.lst
 
 # # for pretrained checkpoint multilingual models All-33
 # export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
@@ -60,16 +60,16 @@ conda activate cdt
 #   --lang ${CORPUS[1]} 
 # done < scripts/languages_debug1.lst
 
-# for monolingual models
-while read line; do
-  CORPUS=($line)
-  echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
-  TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
-  CUDA_VISIBLE_DEVICES=0 python preprocess_treebank.py ${CORPUS[0]} \
-  --roberta roberta-base \
-  --use-gpu \
-  --use_own_lm \
-  --exp_name LOWRES \
-  --lang ${CORPUS[1]} \
-  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}-multi-tok_pretraining_output_low_res/final
-done < scripts/languages_debug1.lst
+# # for monolingual models
+# while read line; do
+#   CORPUS=($line)
+#   echo "python preprocess_treebank.py ${CORPUS[0]} --roberta roberta-base"
+#   TRANSFORMERS_CACHE=${HOME_DIR}/.cache/
+#   CUDA_VISIBLE_DEVICES=0 python preprocess_treebank.py ${CORPUS[0]} \
+#   --roberta roberta-base \
+#   --use-gpu \
+#   --use_own_lm \
+#   --exp_name LOWRES \
+#   --lang ${CORPUS[1]} \
+#   --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/${CORPUS[1]}-multi-tok_pretraining_output_low_res/final
+# done < scripts/languages_debug1.lst
