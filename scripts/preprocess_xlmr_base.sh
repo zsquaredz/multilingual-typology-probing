@@ -40,9 +40,9 @@ while read line; do
   --xlmr xlm-roberta-base \
   --use-gpu \
   --use_own_lm \
-  --exp_name All33LowFR10 \
+  --exp_name All33LowKO10 \
   --lang ${CORPUS[1]} \
-  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_fr_10/final
+  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_ko_10/final
 done < scripts/languages_debug2.lst
 
 # # for pretrained checkpoint multilingual models All-33
