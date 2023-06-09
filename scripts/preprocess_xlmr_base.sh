@@ -40,10 +40,10 @@ while read line; do
   --xlmr xlm-roberta-base \
   --use-gpu \
   --use_own_lm \
-  --exp_name All33LowVI10 \
+  --exp_name All33LowEN10S00 \
   --lang ${CORPUS[1]} \
-  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_vi_10/final
-done < scripts/languages_debug2.lst
+  --model_path /disk/ocean/zheng/multilingual_lm_analysis/out/All33_pretraining_output_low_en_10_sampling_00/final
+done < scripts/languages_debug.lst
 
 # # for pretrained checkpoint multilingual models All-33
 # export PYTHONPATH=${PYTHONPATH}:${HOME_DIR}/multilingual-typology-probing
